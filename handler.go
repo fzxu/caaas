@@ -35,6 +35,19 @@ type ImgHandler struct {
 }
 
 func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// if file was cached, return directly
+	// put it before creating the db session for higher performance
+	if req.Method == "GET" {
+		if id := h.getUUID(req.URL.Path); id != "" {
+			cachedFile, _ := filepath.Abs(filepath.Clean(Config.Image.CacheDir + req.URL.Path))
+			cachedData, err := ioutil.ReadFile(cachedFile)
+			if err == nil {
+				w.Write(cachedData)
+				return
+			}
+		}
+	}
+
 	session, err := h.cluster.CreateSession()
 	if err != nil {
 		log.Panic(err)
@@ -52,15 +65,6 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocql.Session) {
 	path := strings.TrimPrefix(req.URL.Path, "/")
 	if id := h.getUUID(path); id != "" {
-		// if file was cached, return directly
-		cachedFile, _ := filepath.Abs(filepath.Clean(Config.Image.CacheDir + req.URL.Path))
-		cachedData, err := ioutil.ReadFile(cachedFile)
-		if err == nil {
-			w.Write(cachedData)
-			return
-		}
-
-		// not cached, going to process image and cache it for later use
 		width, mode, height := h.getSizes(path)
 
 		asset, err := new(Asset).Find(session, id)
@@ -76,7 +80,8 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 		}
 
 		// create cache image and wrap a multiwriter
-		cacheFile, _ := os.Create(cachedFile)
+		cachedFilePath, _ := filepath.Abs(filepath.Clean(Config.Image.CacheDir + req.URL.Path))
+		cacheFile, _ := os.Create(cachedFilePath)
 		defer cacheFile.Close()
 
 		multiWriter := io.MultiWriter(w, cacheFile)
