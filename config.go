@@ -17,6 +17,7 @@ type DbConfig struct {
 	Http     *HostConfig
 	DBName   string
 	NumConns int
+	Timeout  int
 }
 
 type ImageConfig struct {
@@ -64,7 +65,7 @@ func init() {
 		ProcessPar:    viper.GetInt("image.processPar"),
 	}
 	dbConfig := &DbConfig{&HostConfig{viper.GetString("db.host"), viper.GetString("db.port")},
-		viper.GetString("db.dbName"), viper.GetInt("db.numConns")}
+		viper.GetString("db.dbName"), viper.GetInt("db.numConns"), viper.GetInt("db.timeout")}
 
 	Config = &Configuration{
 		Http:  httpConfig,
