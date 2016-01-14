@@ -125,6 +125,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 
 	fileName, _ := url.QueryUnescape(fileHeader.Filename)
 
+	log.Println("resized:", fileName)
 	asset := &Asset{
 		Name:        fileName,
 		Path:        strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/"),
@@ -133,7 +134,11 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 		Binary:      buf.Bytes(),
 	}
 
-	asset.Save(session)
+	err = asset.Save(session)
+	if err != nil {
+		log.Panic(err)
+	}
+	log.Println("saved:", fileName)
 	data, err := json.Marshal(asset)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
@@ -181,13 +186,16 @@ func (h *ImgHandler) getSizes(path string) (int, string, int) {
 }
 
 func (h *ImgHandler) processImage(in io.Reader, mode string, width int, height int) (*bytes.Buffer, error) {
-	log.Println("width", width, "height", height)
-	img, format, err := image.Decode(in)
+	ImageChannel <- 1
+	defer func() {
+		<-ImageChannel
+	}()
+
+	img, _, err := image.Decode(in)
 	if err != nil {
 		log.Panic(err)
 		return nil, err
 	}
-	log.Println(format)
 
 	var m *image.NRGBA
 	switch mode {

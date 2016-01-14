@@ -11,6 +11,8 @@ import (
 func main() {
 	cluster := gocql.NewCluster(Config.Db.Http.Host)
 	cluster.ProtoVersion = 4
+	cluster.NumConns = Config.Db.NumConns
+	cluster.Timeout = time.Duration(2) * time.Second
 	cluster.Keyspace = Config.Db.DBName
 
 	s := &http.Server{

@@ -15,8 +15,9 @@ type HostConfig struct {
 }
 
 type DbConfig struct {
-	Http   *HostConfig
-	DBName string
+	Http     *HostConfig
+	DBName   string
+	NumConns int
 }
 
 type ImageConfig struct {
@@ -27,6 +28,7 @@ type ImageConfig struct {
 	StoreQuality  int
 	ReadQuality   int
 	CacheDir      string
+	ProcessPar    int
 }
 
 type Configuration struct {
@@ -36,7 +38,8 @@ type Configuration struct {
 }
 
 var (
-	Config *Configuration
+	Config       *Configuration
+	ImageChannel chan int
 )
 
 func init() {
@@ -59,8 +62,10 @@ func init() {
 		StoreQuality:  viper.GetInt("image.storeQuality"),
 		ReadQuality:   viper.GetInt("image.readQuality"),
 		CacheDir:      viper.GetString("image.cacheDir"),
+		ProcessPar:    viper.GetInt("image.processPar"),
 	}
-	dbConfig := &DbConfig{&HostConfig{viper.GetString("db.host"), viper.GetString("db.port")}, viper.GetString("db.dbName")}
+	dbConfig := &DbConfig{&HostConfig{viper.GetString("db.host"), viper.GetString("db.port")},
+		viper.GetString("db.dbName"), viper.GetInt("db.numConns")}
 
 	Config = &Configuration{
 		Http:  httpConfig,
@@ -72,4 +77,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// semaphore for max number of image processor run in parallel
+	ImageChannel = make(chan int, Config.Image.ProcessPar)
 }

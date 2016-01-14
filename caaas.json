@@ -7,7 +7,8 @@
   "db": {
     "host": "127.0.0.1",
     "port": "9042",
-    "dbName": "aaas"
+    "dbName": "aaas",
+    "numConns": 4
   },
 
   "image": {
@@ -20,6 +21,7 @@
     "storeQuality": 100,
     "readQuality": 96,
 
-    "cacheDir": "/tmp"
+    "cacheDir": "/tmp",
+    "processPar": 5 
   }
 }
