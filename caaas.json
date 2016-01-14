@@ -1,0 +1,18 @@
+{
+  "http": {
+    "host": "localhost",
+    "port": "8090"
+  },
+  
+  "db": {
+    "host": "127.0.0.1",
+    "port": "9042",
+    "dbName": "aaas"
+  },
+
+  "image": {
+    "storeWidth": 3200,
+    "storeHeight": 1800,
+    "storeQuality": 100
+  }
+}
