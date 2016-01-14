@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -72,8 +71,7 @@ func init() {
 		Db:    dbConfig,
 		Image: imageConfig,
 	}
-	dir := filepath.Dir(Config.Image.CacheDir)
-	err = os.MkdirAll(dir, 0755)
+	err = os.MkdirAll(Config.Image.CacheDir, 0755)
 	if err != nil {
 		panic(err)
 	}

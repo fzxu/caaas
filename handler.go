@@ -75,10 +75,8 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 			return
 		}
 
-		// create cache folder if necessary
-		cacheFilePath, _ := filepath.Abs(filepath.Clean(Config.Image.CacheDir + req.URL.Path))
 		// create cache image and wrap a multiwriter
-		cacheFile, _ := os.Create(cacheFilePath)
+		cacheFile, _ := os.Create(cachedFile)
 		defer cacheFile.Close()
 
 		multiWriter := io.MultiWriter(w, cacheFile)
