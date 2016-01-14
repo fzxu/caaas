@@ -1,0 +1,21 @@
+http:
+  host: localhost
+  port: 8092
+db: 
+  hosts: 
+    - '127.0.0.1:9042'
+  dbName: aaas
+  numConns: 4
+  timeout: 2  #timeout for db connection
+image:
+  storeWidth: 3200
+  storeHeight: 1800
+
+  defaultWidth: 1024
+  defaultHeight: 800
+
+  storeQuality: 100
+  readQuality: 96
+
+  cacheDir: /tmp
+  processPar: 5 

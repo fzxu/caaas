@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/gocql/gocql"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gocql/gocql"
 )
 
 func main() {
-	cluster := gocql.NewCluster(Config.Db.Http.Host)
+	cluster := gocql.NewCluster(Config.Db.Hosts...)
 	cluster.ProtoVersion = 4
 	cluster.NumConns = Config.Db.NumConns
 	cluster.Timeout = time.Duration(Config.Db.Timeout) * time.Second
@@ -22,5 +23,7 @@ func main() {
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
-	log.Fatal(s.ListenAndServe())
+
+	log.Println("Starting server on:", Config.Http.Host, Config.Http.Port)
+	log.Panic(s.ListenAndServe())
 }
