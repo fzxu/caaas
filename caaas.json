@@ -1,7 +1,7 @@
 {
   "http": {
     "host": "localhost",
-    "port": "8090"
+    "port": "8091"
   },
   
   "db": {
@@ -13,6 +13,13 @@
   "image": {
     "storeWidth": 3200,
     "storeHeight": 1800,
-    "storeQuality": 100
+
+    "defaultWidth": 1024,
+    "defaultHeight": 800,
+
+    "storeQuality": 100,
+    "readQuality": 96,
+
+    "cacheDir": "/tmp"
   }
 }

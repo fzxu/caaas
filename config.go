@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
+	"os"
+	"path/filepath"
+
+	"github.com/spf13/viper"
 )
 
 type HostConfig struct {
@@ -17,9 +20,13 @@ type DbConfig struct {
 }
 
 type ImageConfig struct {
-	StoreWidth   int
-	StoreHeight  int
-	StoreQuality int
+	StoreWidth    int
+	StoreHeight   int
+	DefaultWidth  int
+	DefaultHeight int
+	StoreQuality  int
+	ReadQuality   int
+	CacheDir      string
 }
 
 type Configuration struct {
@@ -44,12 +51,25 @@ func init() {
 	}
 
 	httpConfig := &HostConfig{viper.GetString("http.host"), viper.GetString("http.port")}
-	imageConfig := &ImageConfig{viper.GetInt("image.storeWidth"), viper.GetInt("image.storeHeight"), viper.GetInt("image.storeQuality")}
+	imageConfig := &ImageConfig{
+		StoreWidth:    viper.GetInt("image.storeWidth"),
+		StoreHeight:   viper.GetInt("image.storeHeight"),
+		DefaultWidth:  viper.GetInt("image.defaultWidth"),
+		DefaultHeight: viper.GetInt("image.defaultHeight"),
+		StoreQuality:  viper.GetInt("image.storeQuality"),
+		ReadQuality:   viper.GetInt("image.readQuality"),
+		CacheDir:      viper.GetString("image.cacheDir"),
+	}
 	dbConfig := &DbConfig{&HostConfig{viper.GetString("db.host"), viper.GetString("db.port")}, viper.GetString("db.dbName")}
 
 	Config = &Configuration{
 		Http:  httpConfig,
 		Db:    dbConfig,
 		Image: imageConfig,
+	}
+	dir := filepath.Dir(Config.Image.CacheDir)
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		panic(err)
 	}
 }
