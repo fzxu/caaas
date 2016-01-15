@@ -44,7 +44,7 @@ func (asset *Asset) Find(session *gocql.Session, assetId string) (*Asset, error)
 	return &Asset{id, name, strings.Split(path, ","), contentType, createdAt, binary}, nil
 }
 
-func (asset *Asset) FindByPath(session *gocql.Session, path string) ([]Asset, error) {
+func (asset Asset) FindByPath(session *gocql.Session, path string) ([]Asset, error) {
 	var id gocql.UUID
 	var name string
 	var assets = make([]Asset, 0)
@@ -84,4 +84,39 @@ func (asset *Asset) Save(session *gocql.Session) error {
 		}
 		return nil
 	}
+}
+
+func (asset Asset) Delete(session *gocql.Session, id string) error {
+	a, err := asset.Find(session, id)
+	if err != nil {
+		return err
+	}
+
+	var errRet error
+	if err := session.Query(`DELETE FROM assets WHERE id = ?`, id).Exec(); err != nil {
+		log.Fatal(err)
+		errRet = err
+	}
+	if err := session.Query(`DELETE FROM assetbypaths WHERE path = ? AND id = ?`,
+		strings.Join(a.Path, ","), id).Exec(); err != nil {
+		log.Fatal(err)
+		errRet = err
+	}
+	return errRet
+}
+
+func (asset Asset) DeleteByPath(session *gocql.Session, path string) error {
+	assets, err := asset.FindByPath(session, path)
+	if err != nil {
+		return err
+	}
+
+	var errRet error
+	for _, a := range assets {
+		err = asset.Delete(session, a.Id.String())
+		if err != nil {
+			errRet = err
+		}
+	}
+	return errRet
 }

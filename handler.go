@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -59,11 +60,13 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.get(w, req, session)
 	case "POST":
 		h.post(w, req, session)
+	case "DELETE":
+		h.delete(w, req, session)
 	}
 }
 
 func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocql.Session) {
-	path := strings.TrimPrefix(req.URL.Path, "/")
+	path := strings.TrimSuffix(strings.TrimPrefix(req.URL.Path, "/"), "/")
 	if id := h.getUUID(path); id != "" {
 		width, mode, height := h.getSizes(path)
 
@@ -75,7 +78,7 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 		buf, err := h.processImage(bytes.NewBuffer(asset.Binary), mode, width, height)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
+			fmt.Fprint(w, err.Error())
 			return
 		}
 
@@ -88,7 +91,8 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 		multiWriter.Write(buf.Bytes())
 	} else {
 		// list image under a path
-		assets, err := new(Asset).FindByPath(session, path)
+		pathComma := strings.Join(strings.Split(path, "/"), ",")
+		assets, err := new(Asset).FindByPath(session, pathComma)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -103,7 +107,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	if path == "" || path == "/" {
 		log.Println("Please specify the path")
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("please specify the path"))
+		fmt.Fprint(w, "please specify the path")
 		return
 	}
 
@@ -112,7 +116,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		fmt.Fprint(w, err.Error())
 		return
 	}
 
@@ -122,7 +126,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	if err != nil {
 		log.Panic(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		fmt.Fprint(w, err.Error())
 		return
 	}
 
@@ -131,7 +135,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	log.Println("resized:", fileName)
 	asset := &Asset{
 		Name:        fileName,
-		Path:        strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/"),
+		Path:        strings.Split(strings.TrimSuffix(strings.TrimPrefix(path, "/"), "/"), "/"),
 		ContentType: "image/jpeg",
 		CreatedAt:   time.Now(),
 		Binary:      buf.Bytes(),
@@ -145,6 +149,22 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	data, err := json.Marshal(asset)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
+}
+
+func (h *ImgHandler) delete(w http.ResponseWriter, req *http.Request, session *gocql.Session) {
+	path := strings.TrimSuffix(strings.TrimPrefix(req.URL.Path, "/"), "/")
+	var err error
+	if id := h.getUUID(path); id != "" {
+		err = new(Asset).Delete(session, id)
+	} else {
+		pathComma := strings.Join(strings.Split(path, "/"), ",")
+		err = new(Asset).DeleteByPath(session, pathComma)
+	}
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err.Error())
+	}
 }
 
 func (h *ImgHandler) getUUID(text string) string {
