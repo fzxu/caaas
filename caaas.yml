@@ -1,6 +1,9 @@
 http:
   host: localhost
   port: 8092
+auth:
+  username: demo
+  password: demo
 db: 
   hosts: 
     - '127.0.0.1:9042'

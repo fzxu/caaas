@@ -59,8 +59,16 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	case "GET":
 		h.get(w, req, session)
 	case "POST":
+		if !CheckBasicAuth(req) {
+			fmt.Fprint(w, "Authentication Failed")
+			return
+		}
 		h.post(w, req, session)
 	case "DELETE":
+		if !CheckBasicAuth(req) {
+			fmt.Fprint(w, "Authentication Failed")
+			return
+		}
 		h.delete(w, req, session)
 	}
 }

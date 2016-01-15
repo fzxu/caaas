@@ -13,6 +13,11 @@ type HostConfig struct {
 	Port string
 }
 
+type Auth struct {
+	Username string
+	Password string
+}
+
 type DbConfig struct {
 	Hosts    []string
 	DBName   string
@@ -33,6 +38,7 @@ type ImageConfig struct {
 
 type Configuration struct {
 	Http  *HostConfig
+	Auth  *Auth
 	Db    *DbConfig
 	Image *ImageConfig
 }
@@ -54,6 +60,7 @@ func init() {
 	}
 
 	httpConfig := &HostConfig{viper.GetString("http.host"), viper.GetString("http.port")}
+	authConfig := &Auth{viper.GetString("auth.username"), viper.GetString("auth.password")}
 	imageConfig := &ImageConfig{
 		StoreWidth:    viper.GetInt("image.storeWidth"),
 		StoreHeight:   viper.GetInt("image.storeHeight"),
@@ -69,6 +76,7 @@ func init() {
 
 	Config = &Configuration{
 		Http:  httpConfig,
+		Auth:  authConfig,
 		Db:    dbConfig,
 		Image: imageConfig,
 	}
