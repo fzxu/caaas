@@ -76,7 +76,7 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocql.Session) {
-	path := strings.TrimSuffix(strings.TrimPrefix(req.URL.Path, "/"), "/")
+	path := strings.Trim(req.URL.Path, "/")
 	if id := h.getUUID(path); id != "" {
 		width, mode, height := h.getSizes(path)
 
@@ -146,7 +146,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	log.Println("resized:", fileName)
 	asset := &Asset{
 		Name:        fileName,
-		Path:        strings.Split(strings.TrimSuffix(strings.TrimPrefix(path, "/"), "/"), "/"),
+		Path:        strings.Split(strings.Trim(path, "/"), "/"),
 		ContentType: "image/jpeg",
 		CreatedAt:   time.Now(),
 		Binary:      buf.Bytes(),
@@ -163,7 +163,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 }
 
 func (h *ImgHandler) delete(w http.ResponseWriter, req *http.Request, session *gocql.Session) {
-	path := strings.TrimSuffix(strings.TrimPrefix(req.URL.Path, "/"), "/")
+	path := strings.Trim(req.URL.Path, "/")
 	var err error
 	if id := h.getUUID(path); id != "" {
 		err = new(Asset).Delete(session, id)
