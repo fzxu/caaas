@@ -60,12 +60,14 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.get(w, req, session)
 	case "POST":
 		if !CheckBasicAuth(req) {
+			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Fprint(w, "Authentication Failed")
 			return
 		}
 		h.post(w, req, session)
 	case "DELETE":
 		if !CheckBasicAuth(req) {
+			w.WriteHeader(http.StatusUnauthorized)
 			fmt.Fprint(w, "Authentication Failed")
 			return
 		}
@@ -138,7 +140,8 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 		return
 	}
 
-	fileName, _ := url.QueryUnescape(fileHeader.Filename)
+	_, fn := filepath.Split(fileHeader.Filename)
+	fileName, _ := url.QueryUnescape(fn)
 
 	log.Println("resized:", fileName)
 	asset := &Asset{
