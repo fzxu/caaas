@@ -85,7 +85,9 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 			log.Panic(err)
 		}
 
-		buf, err := h.processImage(bytes.NewBuffer(asset.Binary), mode, width, height)
+		var buf []byte
+		buffer := bytes.NewBuffer(buf)
+		err = h.processImage(bytes.NewBuffer(asset.Binary), buffer, mode, width, height)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, err.Error())
@@ -98,7 +100,7 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 		defer cacheFile.Close()
 
 		multiWriter := io.MultiWriter(w, cacheFile)
-		multiWriter.Write(buf.Bytes())
+		multiWriter.Write(buffer.Bytes())
 	} else {
 		// list image under a path
 		pathComma := strings.Join(strings.Split(path, "/"), ",")
@@ -132,7 +134,9 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 
 	log.Println(fileHeader.Filename)
 
-	buf, err := h.processImage(file, "z", Config.Image.StoreWidth, Config.Image.StoreHeight)
+	var buf []byte
+	buffer := bytes.NewBuffer(buf)
+	err = h.processImage(file, buffer, "z", Config.Image.StoreWidth, Config.Image.StoreHeight)
 	if err != nil {
 		log.Panic(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -149,7 +153,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 		Path:        strings.Split(strings.Trim(path, "/"), "/"),
 		ContentType: "image/jpeg",
 		CreatedAt:   time.Now(),
-		Binary:      buf.Bytes(),
+		Binary:      buffer.Bytes(),
 	}
 
 	err = asset.Save(session)
@@ -219,7 +223,7 @@ func (h *ImgHandler) getSizes(path string) (int, string, int) {
 	return width, mode, height
 }
 
-func (h *ImgHandler) processImage(in io.Reader, mode string, width int, height int) (*bytes.Buffer, error) {
+func (h *ImgHandler) processImage(in io.Reader, out io.Writer, mode string, width int, height int) error {
 	ImageChannel <- 1
 	defer func() {
 		<-ImageChannel
@@ -228,7 +232,7 @@ func (h *ImgHandler) processImage(in io.Reader, mode string, width int, height i
 	img, _, err := image.Decode(in)
 	if err != nil {
 		log.Panic(err)
-		return nil, err
+		return err
 	}
 
 	var m *image.NRGBA
@@ -239,7 +243,6 @@ func (h *ImgHandler) processImage(in io.Reader, mode string, width int, height i
 		m = imaging.Fill(img, width, height, imaging.Center, imaging.Lanczos)
 	}
 
-	buf := new(bytes.Buffer)
-	jpeg.Encode(buf, m, &jpeg.Options{Config.Image.ReadQuality})
-	return buf, nil
+	jpeg.Encode(out, m, &jpeg.Options{Config.Image.ReadQuality})
+	return nil
 }
