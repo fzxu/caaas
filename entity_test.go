@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"log"
+	"log"
 	"testing"
 
 	"github.com/gocql/gocql"
@@ -17,9 +17,19 @@ func TestCreate(t *testing.T) {
 	}
 	defer session.Close()
 
-	//asset, err := new(Asset).Find(session, "668a43b0-b82b-11e5-9ac5-f7654b5743d8")
-	if err != nil {
-		//log.Panic(err)
+	asset := &Asset{
+		Name:        "test1",
+		Path:        []string{"a", "b"},
+		ContentType: "image/jpeg",
 	}
-	//log.Println(asset)
+	err = asset.Save(session)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = asset.Delete(session, asset.Id.String())
+	if err != nil {
+		log.Panic(err)
+	}
+	log.Println(asset)
 }
