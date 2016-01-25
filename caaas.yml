@@ -21,4 +21,5 @@ image:
   readQuality: 96
 
   cacheDir: /tmp
+  useGoRoutine: false
   processPar: 5 

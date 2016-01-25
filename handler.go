@@ -224,10 +224,12 @@ func (h *ImgHandler) getSizes(path string) (int, string, int) {
 }
 
 func (h *ImgHandler) processImage(in io.Reader, out io.Writer, mode string, width int, height int) error {
-	ImageChannel <- 1
-	defer func() {
-		<-ImageChannel
-	}()
+	if Config.Image.UseGoRoutine {
+		ImageChannel <- 1
+		defer func() {
+			<-ImageChannel
+		}()
+	}
 
 	img, _, err := image.Decode(in)
 	if err != nil {

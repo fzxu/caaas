@@ -33,6 +33,7 @@ type ImageConfig struct {
 	StoreQuality  int
 	ReadQuality   int
 	CacheDir      string
+	UseGoRoutine  bool
 	ProcessPar    int
 }
 
@@ -69,6 +70,7 @@ func init() {
 		StoreQuality:  viper.GetInt("image.storeQuality"),
 		ReadQuality:   viper.GetInt("image.readQuality"),
 		CacheDir:      viper.GetString("image.cacheDir"),
+		UseGoRoutine:  viper.GetBool("image.useGoRoutine"),
 		ProcessPar:    viper.GetInt("image.processPar"),
 	}
 	dbConfig := &DbConfig{viper.GetStringSlice("db.hosts"),
