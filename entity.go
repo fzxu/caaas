@@ -2,11 +2,11 @@ package main
 
 import (
 	"errors"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/golang/glog"
 )
 
 type Asset struct {
@@ -60,26 +60,26 @@ func (asset *Asset) Save(session *gocql.Session) error {
 		asset.Id = gocql.TimeUUID()
 		if err := session.Query(`INSERT INTO assets (id, name, path, contenttype, createdat, binary) VALUES (?, ?, ?, ?, ?, ?)`,
 			asset.Id, asset.Name, strings.Join(asset.Path, ","), asset.ContentType, asset.CreatedAt, asset.Binary).Exec(); err != nil {
-			log.Fatal(err)
+			glog.Fatal(err)
 			return err
 		}
 
 		if err := session.Query(`INSERT INTO assetbypaths (path, id, name) VALUES (?, ?, ?)`,
 			strings.Join(asset.Path, ","), asset.Id, asset.Name).Exec(); err != nil {
-			log.Fatal(err)
+			glog.Fatal(err)
 			return err
 		}
 		return nil
 	} else {
 		if err := session.Query(`UPDATE assets SET name = ?, path = ?, contenttype = ? WHERE id = ?`,
 			asset.Name, strings.Join(asset.Path, ","), asset.ContentType, asset.Id).Exec(); err != nil {
-			log.Fatal(err)
+			glog.Fatal(err)
 			return err
 		}
 
 		if err := session.Query(`UPDATE assetbypaths SET name = ?, path = ? WHERE id = ?`,
 			asset.Name, strings.Join(asset.Path, ","), asset.Id).Exec(); err != nil {
-			log.Fatal(err)
+			glog.Fatal(err)
 			return err
 		}
 		return nil
@@ -94,12 +94,12 @@ func (asset Asset) Delete(session *gocql.Session, id string) error {
 
 	var errRet error
 	if err := session.Query(`DELETE FROM assets WHERE id = ?`, id).Exec(); err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 		errRet = err
 	}
 	if err := session.Query(`DELETE FROM assetbypaths WHERE path = ? AND id = ?`,
 		strings.Join(a.Path, ","), id).Exec(); err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 		errRet = err
 	}
 	return errRet

@@ -1,15 +1,18 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/golang/glog"
 
 	"github.com/gocql/gocql"
 )
 
 func main() {
+	flag.Parse()
 	cluster := gocql.NewCluster(Config.Db.Hosts...)
 	cluster.ProtoVersion = 4
 	cluster.NumConns = Config.Db.NumConns
@@ -24,6 +27,6 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	log.Println("Starting server on:", Config.Http.Host, Config.Http.Port)
-	log.Panic(s.ListenAndServe())
+	glog.Info("Starting server on:", Config.Http.Host, Config.Http.Port)
+	glog.Fatal(s.ListenAndServe())
 }

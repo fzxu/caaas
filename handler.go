@@ -10,7 +10,6 @@ import (
 	"image/png"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 
 	"github.com/disintegration/imaging"
 	"github.com/gocql/gocql"
@@ -51,7 +52,7 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	session, err := h.cluster.CreateSession()
 	if err != nil {
-		log.Panic(err)
+		glog.Fatal(err)
 	}
 	defer session.Close()
 
@@ -82,7 +83,7 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 
 		asset, err := new(Asset).Find(session, id)
 		if err != nil {
-			log.Panic(err)
+			glog.Fatal(err)
 		}
 
 		var buf []byte
@@ -106,7 +107,7 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 		pathComma := strings.Join(strings.Split(path, "/"), ",")
 		assets, err := new(Asset).FindByPath(session, pathComma)
 		if err != nil {
-			log.Panic(err)
+			glog.Fatal(err)
 		}
 		data, err := json.Marshal(assets)
 		w.Header().Set("Content-Type", "application/json")
@@ -117,7 +118,7 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *gocql.Session) {
 	path := req.URL.Path
 	if path == "" || path == "/" {
-		log.Println("Please specify the path")
+		glog.Error("Please specify the path")
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "please specify the path")
 		return
@@ -126,19 +127,19 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	req.ParseMultipartForm(10 << 20) // 10M
 	file, fileHeader, err := req.FormFile("file")
 	if err != nil {
-		log.Println(err)
+		glog.Error(err)
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, err.Error())
 		return
 	}
 
-	log.Println(fileHeader.Filename)
+	glog.Info(fileHeader.Filename)
 
 	var buf []byte
 	buffer := bytes.NewBuffer(buf)
 	err = h.processImage(file, buffer, "z", Config.Image.StoreWidth, Config.Image.StoreHeight)
 	if err != nil {
-		log.Panic(err)
+		glog.Fatal(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, err.Error())
 		return
@@ -147,7 +148,7 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 	_, fn := filepath.Split(fileHeader.Filename)
 	fileName, _ := url.QueryUnescape(fn)
 
-	log.Println("resized:", fileName)
+	glog.Info("resized:", fileName)
 	asset := &Asset{
 		Name:        fileName,
 		Path:        strings.Split(strings.Trim(path, "/"), "/"),
@@ -158,9 +159,9 @@ func (h *ImgHandler) post(w http.ResponseWriter, req *http.Request, session *goc
 
 	err = asset.Save(session)
 	if err != nil {
-		log.Panic(err)
+		glog.Fatal(err)
 	}
-	log.Println("saved:", fileName)
+	glog.Info("saved:", fileName)
 	data, err := json.Marshal(asset)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
@@ -233,7 +234,7 @@ func (h *ImgHandler) processImage(in io.Reader, out io.Writer, mode string, widt
 
 	img, _, err := image.Decode(in)
 	if err != nil {
-		log.Panic(err)
+		glog.Fatal(err)
 		return err
 	}
 
