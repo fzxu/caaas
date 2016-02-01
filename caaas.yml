@@ -21,5 +21,6 @@ image:
   readQuality: 96
 
   cacheDir: /tmp
+  cacheDirLength: 3
   useGoRoutine: false
   processPar: 5 

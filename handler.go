@@ -41,7 +41,7 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// put it before creating the db session for higher performance
 	if req.Method == "GET" {
 		if id := h.getUUID(req.URL.Path); id != "" {
-			cachedFile, _ := filepath.Abs(filepath.Clean(Config.Image.CacheDir + req.URL.Path))
+			cachedFile := h.getCacheFilePath(id, req.URL.Path)
 			cachedData, err := ioutil.ReadFile(cachedFile)
 			if err == nil {
 				w.Write(cachedData)
@@ -96,7 +96,7 @@ func (h *ImgHandler) get(w http.ResponseWriter, req *http.Request, session *gocq
 		}
 
 		// create cache image and wrap a multiwriter
-		cachedFilePath, _ := filepath.Abs(filepath.Clean(Config.Image.CacheDir + req.URL.Path))
+		cachedFilePath := h.getCacheFilePath(id, req.URL.Path)
 		cacheFile, _ := os.Create(cachedFilePath)
 		defer cacheFile.Close()
 
@@ -189,6 +189,22 @@ func (h *ImgHandler) getUUID(text string) string {
 		return r.FindStringSubmatch(text)[0]
 	}
 	return ""
+}
+
+func (h *ImgHandler) getCacheFilePath(id, path string) string {
+	cacheFolder, err := filepath.Abs(filepath.Clean(Config.Image.CacheDir + "/" + id[:Config.Image.CacheDirLength]))
+	// create cache folder if not exist
+	if _, err := os.Stat(cacheFolder); os.IsNotExist(err) {
+		err = os.MkdirAll(cacheFolder, 0755)
+		if err != nil {
+			glog.Error(err)
+		}
+	}
+	cacheFilePath, err := filepath.Abs(filepath.Clean(cacheFolder + path))
+	if err != nil {
+		glog.Error(err)
+	}
+	return cacheFilePath
 }
 
 // get the width, crop mode and height

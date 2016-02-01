@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/golang/glog"
 	"github.com/spf13/viper"
@@ -26,15 +25,16 @@ type DbConfig struct {
 }
 
 type ImageConfig struct {
-	StoreWidth    int
-	StoreHeight   int
-	DefaultWidth  int
-	DefaultHeight int
-	StoreQuality  int
-	ReadQuality   int
-	CacheDir      string
-	UseGoRoutine  bool
-	ProcessPar    int
+	StoreWidth     int
+	StoreHeight    int
+	DefaultWidth   int
+	DefaultHeight  int
+	StoreQuality   int
+	ReadQuality    int
+	CacheDir       string
+	CacheDirLength int
+	UseGoRoutine   bool
+	ProcessPar     int
 }
 
 type Configuration struct {
@@ -63,15 +63,16 @@ func init() {
 	httpConfig := &HostConfig{viper.GetString("http.host"), viper.GetString("http.port")}
 	authConfig := &Auth{viper.GetString("auth.username"), viper.GetString("auth.password")}
 	imageConfig := &ImageConfig{
-		StoreWidth:    viper.GetInt("image.storeWidth"),
-		StoreHeight:   viper.GetInt("image.storeHeight"),
-		DefaultWidth:  viper.GetInt("image.defaultWidth"),
-		DefaultHeight: viper.GetInt("image.defaultHeight"),
-		StoreQuality:  viper.GetInt("image.storeQuality"),
-		ReadQuality:   viper.GetInt("image.readQuality"),
-		CacheDir:      viper.GetString("image.cacheDir"),
-		UseGoRoutine:  viper.GetBool("image.useGoRoutine"),
-		ProcessPar:    viper.GetInt("image.processPar"),
+		StoreWidth:     viper.GetInt("image.storeWidth"),
+		StoreHeight:    viper.GetInt("image.storeHeight"),
+		DefaultWidth:   viper.GetInt("image.defaultWidth"),
+		DefaultHeight:  viper.GetInt("image.defaultHeight"),
+		StoreQuality:   viper.GetInt("image.storeQuality"),
+		ReadQuality:    viper.GetInt("image.readQuality"),
+		CacheDir:       viper.GetString("image.cacheDir"),
+		CacheDirLength: viper.GetInt("image.cacheDirLength"),
+		UseGoRoutine:   viper.GetBool("image.useGoRoutine"),
+		ProcessPar:     viper.GetInt("image.processPar"),
 	}
 	dbConfig := &DbConfig{viper.GetStringSlice("db.hosts"),
 		viper.GetString("db.dbName"), viper.GetInt("db.numConns"), viper.GetInt("db.timeout")}
@@ -81,10 +82,6 @@ func init() {
 		Auth:  authConfig,
 		Db:    dbConfig,
 		Image: imageConfig,
-	}
-	err = os.MkdirAll(Config.Image.CacheDir, 0755)
-	if err != nil {
-		panic(err)
 	}
 
 	// semaphore for max number of image processor run in parallel
