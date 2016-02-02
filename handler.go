@@ -40,6 +40,12 @@ func (h *ImgHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// if file was cached, return directly
 	// put it before creating the db session for higher performance
 	if req.Method == "GET" {
+		// this is the health check info
+		if req.URL.Path == "/" {
+			fmt.Fprint(w, "--OK--")
+			return
+		}
+
 		if id := h.getUUID(req.URL.Path); id != "" {
 			cachedFile := h.getCacheFilePath(id, req.URL.Path)
 			cachedData, err := ioutil.ReadFile(cachedFile)
